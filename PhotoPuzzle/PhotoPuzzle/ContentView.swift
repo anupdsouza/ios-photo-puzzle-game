@@ -11,6 +11,7 @@ import PhotosUI
 struct ContentView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
+    @State private var croppedImage: UIImage?
     var body: some View {
         VStack {
             
@@ -18,6 +19,13 @@ struct ContentView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
+                    .frame(height: 200)
+            }
+            if let image = croppedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 350, height: 350)
             }
 
             PhotosPicker(selection: $selectedItem, matching: .images) {
@@ -34,13 +42,20 @@ struct ContentView: View {
             guard let imageData = try await selectedItem?.loadTransferable(type: Data.self) else { return }
             guard let inputImage = UIImage(data: imageData) else { return }
             selectedImage = inputImage
+            processImage()
         }
     }
     
     func processImage() {
         if let image = selectedImage {
-            let size = min(image.size.width, image.size.height)
-            // TODO: Clip portion of the image from the center as a square of the given size
+            let minLength = min(image.size.width, image.size.height)
+            let x = image.size.width / 2 - minLength / 2
+            let y = image.size.height / 2 - minLength / 2
+            let croppingRect = CGRect(x: x, y: y, width: minLength, height: minLength)
+            
+            if let croppedCGImage = image.cgImage?.cropping(to: croppingRect) {
+                croppedImage = UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
+            }
         }
     }
 }
