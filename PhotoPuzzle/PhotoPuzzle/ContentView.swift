@@ -12,22 +12,34 @@ struct ContentView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
     @State private var croppedImage: UIImage?
+    @State private var imageTiles: [[UIImage]] = []
+    private let tileSpacing = 5.0
+    
     var body: some View {
         VStack {
-            
-            if let image = selectedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 200)
-            }
             if let image = croppedImage {
+                Text("Visual Hint")
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 350, height: 350)
+                    .frame(width: 150, height: 150)
             }
-
+            if !imageTiles.isEmpty {
+                GeometryReader { geometry in
+                    VStack(spacing: tileSpacing) {
+                        ForEach(0..<3, id: \.self) { row in
+                            HStack(spacing: tileSpacing) {
+                                ForEach(0..<3, id: \.self) { column in
+                                    Image(uiImage: imageTiles[row][column])
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: (geometry.size.width - (tileSpacing*2)) / 3, height: (geometry.size.width - (tileSpacing*2)) / 3)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             PhotosPicker(selection: $selectedItem, matching: .images) {
                 Image(systemName: "photo.stack.fill")
                     .frame(width: 40, height: 25)
@@ -55,8 +67,31 @@ struct ContentView: View {
             
             if let croppedCGImage = image.cgImage?.cropping(to: croppingRect) {
                 croppedImage = UIImage(cgImage: croppedCGImage, scale: image.scale, orientation: image.imageOrientation)
+                imageTiles = tilesFromImage(image: croppedImage!, size: CGSize(width: minLength/3, height: minLength/3))
             }
         }
+    }
+    
+    func tilesFromImage(image: UIImage, size: CGSize) -> [[UIImage]] {
+        let hRowCount = Int(image.size.width / size.width)
+        let vRowCount = Int(image.size.height / size.height)
+        let tileSize = size.width
+        
+        
+        var tiles = [[UIImage]](repeating: [], count: vRowCount)
+        for vIndex in 0..<vRowCount {
+            for hIndex in 0..<hRowCount {
+                let imagePoint = CGPoint(x: CGFloat(hIndex) * tileSize * -1, y: CGFloat(vIndex) * tileSize * -1)
+                UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+                image.draw(at: imagePoint)
+                if let newImage = UIGraphicsGetImageFromCurrentImageContext() {
+                    tiles[vIndex].append(newImage)
+                }
+                UIGraphicsEndImageContext()
+            }
+        }
+        
+        return tiles
     }
 }
 
