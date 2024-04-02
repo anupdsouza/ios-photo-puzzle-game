@@ -88,3 +88,5 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+PhotoPuzzle/PhotoPuzzle.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+PhotoPuzzle/PhotoPuzzle.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
