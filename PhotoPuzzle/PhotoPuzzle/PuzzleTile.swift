@@ -9,6 +9,6 @@ import Foundation
 import UIKit
 
 struct PuzzleTile: Equatable {
-    let image: UIImage
+    let image: UIImage?
     var isSpareTile = false
 }

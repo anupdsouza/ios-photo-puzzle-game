@@ -17,7 +17,7 @@ struct PuzzleLoader {
         
         guard let inputImage = UIImage(data: imageData),
               let croppedImage = cropImageForPuzzle(image: inputImage) else {
-            throw NSError(domain: "Error loading image", code: 0, userInfo: nil)
+            throw NSError(domain: "Error loading image", code: 1, userInfo: nil)
         }
 
         let tiles = tilesFromImage(image: croppedImage,
@@ -46,9 +46,7 @@ struct PuzzleLoader {
         for vIndex in 0..<vRowCount {
             for hIndex in 0..<hRowCount {
                 if vIndex == vRowCount - 1 && hIndex == hRowCount - 1 { // skip last tile with blank one
-                    if let emptyTileImage = UIImage(named: "black") {
-                        tiles[vIndex].append(PuzzleTile(image: emptyTileImage, isSpareTile: true))
-                    }
+                        tiles[vIndex].append(PuzzleTile(image: nil, isSpareTile: true))
                 } else {
                     let imagePoint = CGPoint(x: CGFloat(hIndex) * tileSideLength * -1, y: CGFloat(vIndex) * tileSideLength * -1)
                     UIGraphicsBeginImageContextWithOptions(size, false, 0.0)

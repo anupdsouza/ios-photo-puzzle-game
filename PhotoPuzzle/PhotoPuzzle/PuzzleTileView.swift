@@ -11,12 +11,12 @@ struct PuzzleTileView: View {
     let tile: PuzzleTile
     var body: some View {
         VStack {
-            if tile.isSpareTile {
-                Color.white
-            } else {
-                Image(uiImage: tile.image)
+            if let image = tile.image {
+                Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
+            } else {
+                Color.white
             }
         }
         .overlay {
