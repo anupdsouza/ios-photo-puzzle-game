@@ -8,11 +8,6 @@
 import SwiftUI
 import PhotosUI
 
-struct Tile: Equatable {
-    let image: UIImage
-    var isSpareTile = false
-}
-
 enum Direction {
     case up, down, left, right
 }
@@ -20,8 +15,8 @@ enum Direction {
 struct ContentView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var puzzleImage: UIImage?
-    @State private var orderedTiles: [[Tile]]?
-    @State private var shuffledTiles: [[Tile]]?
+    @State private var orderedTiles: [[PuzzleTile]]?
+    @State private var shuffledTiles: [[PuzzleTile]]?
     @State private var userWon = false
     @State private var loadingImage = false
     @State private var loadedPuzzle = false
@@ -50,9 +45,7 @@ struct ContentView: View {
                             ForEach(0..<3, id: \.self) { row in
                                 HStack(spacing: tileSpacing) {
                                     ForEach(0..<3, id: \.self) { column in
-                                        Image(uiImage: shuffledTiles[row][column].image)
-                                            .resizable()
-                                            .scaledToFill()
+                                        PuzzleTileView(tile: shuffledTiles[row][column])
                                             .frame(width: (geometry.size.width - (tileSpacing*2)) / 3, height: (geometry.size.width - (tileSpacing*2)) / 3)
                                             .clipped()
                                             .onTapGesture {
@@ -67,7 +60,6 @@ struct ContentView: View {
                     Spacer()
                     
                     footerView()
-                    
                 }
             }
             else {
@@ -107,7 +99,7 @@ struct ContentView: View {
     @ViewBuilder private func photoPickerView() -> some View {
         PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
             VStack(spacing: 20) {
-                Image(systemName: "photo.fill")
+                Image(systemName: "puzzlepiece.fill")
                     .font(.largeTitle)
                 
             }
@@ -154,21 +146,21 @@ struct ContentView: View {
         guard var shuffledTiles = shuffledTiles else { return }
         guard shuffledTiles[row][column].isSpareTile == false else { return }
         
-        // Check if there is a black tile adjacent to the tapped tile
-        if let blackTileIndex = findAdjacentBlackTile(to: (row, column)) {
-            // Swap the positions of the tapped tile and the black tile
+        // Check if there is a spare tile adjacent to the tapped tile
+        if let spareTileIndex = findAdjacentSpareTile(to: (row, column)) {
+            // Swap the positions of the tapped tile and the spare tile
             moveCount += 1
             let tappedTile = shuffledTiles[row][column]
-            shuffledTiles[row][column] = shuffledTiles[blackTileIndex.0][blackTileIndex.1]
-            shuffledTiles[blackTileIndex.0][blackTileIndex.1] = tappedTile
+            shuffledTiles[row][column] = shuffledTiles[spareTileIndex.0][spareTileIndex.1]
+            shuffledTiles[spareTileIndex.0][spareTileIndex.1] = tappedTile
             
             self.shuffledTiles = shuffledTiles
             userWon = self.shuffledTiles == orderedTiles
         }
     }
     
-    // Find the index of the black tile adjacent to the given tile
-    func findAdjacentBlackTile(to tileIndex: (Int, Int)) -> (Int, Int)? {
+    // Find the index of the spare tile adjacent to the given tile
+    func findAdjacentSpareTile(to tileIndex: (Int, Int)) -> (Int, Int)? {
         let directions: [Direction] = [.up, .down, .left, .right]
         
         for direction in directions {

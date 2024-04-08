@@ -10,7 +10,7 @@ import PhotosUI
 import SwiftUI
 
 struct PuzzleLoader {
-    func loadPuzzleFromItem(_ photoItem: PhotosPickerItem) async throws -> (UIImage, ([[Tile]], [[Tile]])) {
+    func loadPuzzleFromItem(_ photoItem: PhotosPickerItem) async throws -> (UIImage, ([[PuzzleTile]], [[PuzzleTile]])) {
         guard let imageData = try await photoItem.loadTransferable(type: Data.self) else {
             throw NSError(domain: "Error loading photo item from library", code: 0, userInfo: nil)
         }
@@ -37,24 +37,24 @@ struct PuzzleLoader {
         return nil
     }
     
-    private func tilesFromImage(image: UIImage, size: CGSize) -> ([[Tile]], [[Tile]]) {
+    private func tilesFromImage(image: UIImage, size: CGSize) -> ([[PuzzleTile]], [[PuzzleTile]]) {
         let hRowCount = Int(image.size.width / size.width)
         let vRowCount = Int(image.size.height / size.height)
         let tileSideLength = size.width
         
-        var tiles = [[Tile]](repeating: [], count: vRowCount)
+        var tiles = [[PuzzleTile]](repeating: [], count: vRowCount)
         for vIndex in 0..<vRowCount {
             for hIndex in 0..<hRowCount {
                 if vIndex == vRowCount - 1 && hIndex == hRowCount - 1 { // skip last tile with blank one
                     if let emptyTileImage = UIImage(named: "black") {
-                        tiles[vIndex].append(Tile(image: emptyTileImage, isSpareTile: true))
+                        tiles[vIndex].append(PuzzleTile(image: emptyTileImage, isSpareTile: true))
                     }
                 } else {
                     let imagePoint = CGPoint(x: CGFloat(hIndex) * tileSideLength * -1, y: CGFloat(vIndex) * tileSideLength * -1)
                     UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
                     image.draw(at: imagePoint)
                     if let newImage = UIGraphicsGetImageFromCurrentImageContext() {
-                        tiles[vIndex].append(Tile(image: newImage))
+                        tiles[vIndex].append(PuzzleTile(image: newImage))
                     }
                     UIGraphicsEndImageContext()
                 }
