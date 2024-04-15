@@ -19,9 +19,14 @@ struct PuzzleTileView: View {
                 Color.white
             }
         }
-        .overlay {
-            Rectangle()
-                .stroke(.black, lineWidth: 1.0)
-        }
+        .overlay(content: {
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(.white, lineWidth: 5)
+        })
+        .clipShape(RoundedRectangle(cornerRadius: 5))
     }
+}
+
+#Preview {
+    PuzzleTileView(tile: PuzzleTile(image: nil, isSpareTile: true))
 }

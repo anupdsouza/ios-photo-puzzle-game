@@ -20,69 +20,59 @@ struct ContentView: View {
     @State private var userWon = false
     @State private var loadingImage = false
     @State private var loadedPuzzle = false
-    @State private var moveCount = 0
+    @State private var showHint = false
+    @State private var moves = 0
     private let tileSpacing = 5.0
     
     var body: some View {
         VStack {
             
-            if loadedPuzzle {
-                if let shuffledTiles, let puzzleImage {
-                    if userWon {
-                        Text("YOU WON")
-                            .font(.largeTitle).bold()
-                    } else {
-                        Text("Visual Hint")
-                    }
+            titleView()
+
+            if loadedPuzzle, let shuffledTiles, let puzzleImage {
+                
+                HStack(alignment: .center) {
+                    movesCountView()
                     
-                    Image(uiImage: puzzleImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 150, height: 150)
+                    puzzleHintToggleView()
                     
-                    GeometryReader { geometry in
-                        VStack(spacing: tileSpacing) {
-                            ForEach(0..<3, id: \.self) { row in
-                                HStack(spacing: tileSpacing) {
-                                    ForEach(0..<3, id: \.self) { column in
-                                        PuzzleTileView(tile: shuffledTiles[row][column])
-                                            .frame(width: (geometry.size.width - (tileSpacing*2)) / 3, height: (geometry.size.width - (tileSpacing*2)) / 3)
-                                            .clipped()
-                                            .onTapGesture {
-                                                tappedTile(row: row, column: column)
-                                            }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    footerView()
+                    photoPickerView()
                 }
+                
+                puzzleHintView(puzzleImage)
+                
+                puzzleView(shuffledTiles)
+                    .padding()
+                    .alert("You Win 🏆", isPresented: $userWon) {}
             }
             else {
                 emptyPuzzleView()
             }
         }
-        .padding()
+        .foregroundStyle(.white)
+        .background {
+            LinearGradient(colors: [Color.colorGradientTop, Color.colorGradientBottom],
+                           startPoint: .topLeading,
+                           endPoint: .bottomTrailing)
+                .ignoresSafeArea()
+        }
     }
-    
-    private func reset() {
-        moveCount = 0
-        userWon = false
-        loadedPuzzle = false
-        puzzleImage = nil
-        orderedTiles = nil
-        shuffledTiles = nil
+    @ViewBuilder private func titleView() -> some View {
+        HStack {
+            Image(systemName: "puzzlepiece.fill")
+                .font(.largeTitle)
+            Text("Piczle")
+                .font(.custom("Noteworthy Bold", fixedSize: 36))
+        }
+        .padding(.bottom, 20)
     }
     
     @ViewBuilder private func emptyPuzzleView() -> some View {
         VStack {
             if loadingImage {
                 Text("Loading...")
-                    .bold()
+                    .font(.largeTitle).bold()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ContentUnavailableView(label: {
                     Text("No Image Selected")
@@ -95,16 +85,13 @@ struct ContentView: View {
             }
         }
     }
-    
+
     @ViewBuilder private func photoPickerView() -> some View {
         PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-            VStack(spacing: 20) {
-                Image(systemName: "puzzlepiece.fill")
-                    .font(.largeTitle)
-                
-            }
-            .tint(.primary)
+            Image(systemName: "photo")
+                .font(.largeTitle)
         }
+        .frame(maxWidth: .infinity)
         .onChange(of: selectedPhotoItem, { _, _ in
             Task {
                 if let selectedPhotoItem {
@@ -131,25 +118,77 @@ struct ContentView: View {
             }
         })
     }
+
+    @ViewBuilder private func movesCountView() -> some View {
+        HStack {
+            Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+            Text("\(moves)")
+                .monospaced()
+        }
+        .font(.largeTitle)
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder private func puzzleHintToggleView() -> some View {
+        Button(action: {
+            withAnimation {
+                showHint.toggle()
+            }
+        }, label: {
+            Image(systemName: showHint ? "eye.circle.fill" : "eye.slash.circle.fill")
+                .font(.largeTitle)
+        })
+        .frame(maxWidth: .infinity)
+    }
     
-    @ViewBuilder private func footerView() -> some View {
-        Group {
-            Text("Moves: \(moveCount)")
-            HStack(spacing: 15) {
-                Text("Change image")
-                photoPickerView()
+    @ViewBuilder private func puzzleHintView(_ image: UIImage) -> some View {
+        if showHint {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 150, height: 150)
+                .animation(.easeInOut, value: showHint)
+        }
+    }
+
+    @ViewBuilder private func puzzleView(_ tiles: [[PuzzleTile]]) -> some View {
+        GeometryReader { geo in
+            VStack(spacing: tileSpacing) {
+                ForEach(0..<3, id: \.self) { row in
+                    HStack(spacing: tileSpacing) {
+                        ForEach(0..<3, id: \.self) { column in
+                            let tile = tiles[row][column]
+                            PuzzleTileView(tile: tile)
+                                .frame(width: (geo.size.width - (tileSpacing*2)) / 3,
+                                       height: (geo.size.width - (tileSpacing*2)) / 3)
+                                .onTapGesture {
+                                    tappedTile(row: row, column: column)
+                                }
+                        }
+                    }
+                }
             }
         }
     }
+
+    private func reset() {
+        moves = 0
+        userWon = false
+        loadedPuzzle = false
+        puzzleImage = nil
+        orderedTiles = nil
+        shuffledTiles = nil
+    }
     
     private func tappedTile(row: Int, column: Int) {
+        guard userWon == false else { return }
         guard var shuffledTiles = shuffledTiles else { return }
         guard shuffledTiles[row][column].isSpareTile == false else { return }
         
         // Check if there is a spare tile adjacent to the tapped tile
         if let spareTileIndex = findAdjacentSpareTile(to: (row, column)) {
             // Swap the positions of the tapped tile and the spare tile
-            moveCount += 1
+            moves += 1
             let tappedTile = shuffledTiles[row][column]
             shuffledTiles[row][column] = shuffledTiles[spareTileIndex.0][spareTileIndex.1]
             shuffledTiles[spareTileIndex.0][spareTileIndex.1] = tappedTile
@@ -160,7 +199,7 @@ struct ContentView: View {
     }
     
     // Find the index of the spare tile adjacent to the given tile
-    func findAdjacentSpareTile(to tileIndex: (Int, Int)) -> (Int, Int)? {
+    private func findAdjacentSpareTile(to tileIndex: (Int, Int)) -> (Int, Int)? {
         let directions: [Direction] = [.up, .down, .left, .right]
         
         for direction in directions {
@@ -174,7 +213,7 @@ struct ContentView: View {
     }
 
     // Get the index of the tile adjacent to the given tile in the specified direction
-    func getAdjacentTileIndex(from tileIndex: (Int, Int), direction: Direction) -> (Int, Int) {
+    private func getAdjacentTileIndex(from tileIndex: (Int, Int), direction: Direction) -> (Int, Int) {
         switch direction {
         case .up:
             return (tileIndex.0 - 1, tileIndex.1)
@@ -188,7 +227,7 @@ struct ContentView: View {
     }
 
     // Check if the given tile index is valid
-    func isValidIndex(_ tileIndex: (Int, Int)) -> Bool {
+    private func isValidIndex(_ tileIndex: (Int, Int)) -> Bool {
         guard let shuffledTiles = shuffledTiles else { return false }
         return tileIndex.0 >= 0 && tileIndex.0 < shuffledTiles.count &&
         tileIndex.1 >= 0 && tileIndex.1 < shuffledTiles[tileIndex.0].count
