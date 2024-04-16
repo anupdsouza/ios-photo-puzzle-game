@@ -25,54 +25,61 @@ struct ContentView: View {
     private let tileSpacing = 5.0
     
     var body: some View {
-        VStack {
-            
-            titleView()
-
-            if loadedPuzzle, let shuffledTiles, let puzzleImage {
-                
-                HStack(alignment: .center) {
-                    movesCountView()
+        NavigationView {
+            VStack {
+                if loadedPuzzle, let shuffledTiles, let puzzleImage {
                     
-                    puzzleHintToggleView()
+                    HStack(alignment: .center) {
+                        movesCountView()
+                        
+                        puzzleHintToggleView()
+                        
+                        photoPickerView()
+                    }
+                    .padding(.top, 20)
+                    .foregroundStyle(Color.colorYellow)
                     
-                    photoPickerView()
+                    puzzleHintView(puzzleImage)
+                    
+                    puzzleView(shuffledTiles)
+                        .padding()
+                        .alert("You Win 🏆", isPresented: $userWon) {}
                 }
-                
-                puzzleHintView(puzzleImage)
-                
-                puzzleView(shuffledTiles)
-                    .padding()
-                    .alert("You Win 🏆", isPresented: $userWon) {}
+                else {
+                    emptyPuzzleView()
+                }
             }
-            else {
-                emptyPuzzleView()
+            .background {
+                Color.colorBg
+                    .ignoresSafeArea()
             }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(content: {
+                ToolbarItem(placement: .principal) {
+                    titleView()
+                }
+            })
         }
         .foregroundStyle(.white)
-        .background {
-            LinearGradient(colors: [Color.colorGradientTop, Color.colorGradientBottom],
-                           startPoint: .topLeading,
-                           endPoint: .bottomTrailing)
-                .ignoresSafeArea()
-        }
+        .font(.title)
     }
+
     @ViewBuilder private func titleView() -> some View {
         HStack {
             Image(systemName: "puzzlepiece.fill")
-                .font(.largeTitle)
             Text("Piczle")
-                .font(.custom("Noteworthy Bold", fixedSize: 36))
+                .font(.custom("Noteworthy Bold", fixedSize: 30))
         }
-        .padding(.bottom, 20)
+        .foregroundLinearGradient(colors: [Color.colorYellow, Color.colorOrange], startPoint: .top, endPoint: .bottom)
     }
     
     @ViewBuilder private func emptyPuzzleView() -> some View {
         VStack {
             if loadingImage {
                 Text("Loading...")
-                    .font(.largeTitle).bold()
+                    .bold()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .foregroundStyle(Color.colorOrange)
             } else {
                 ContentUnavailableView(label: {
                     Text("No Image Selected")
@@ -84,12 +91,12 @@ struct ContentView: View {
                 })
             }
         }
+        .foregroundStyle(Color.colorOrange)
     }
 
     @ViewBuilder private func photoPickerView() -> some View {
         PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
             Image(systemName: "photo")
-                .font(.largeTitle)
         }
         .frame(maxWidth: .infinity)
         .onChange(of: selectedPhotoItem, { _, _ in
@@ -125,7 +132,6 @@ struct ContentView: View {
             Text("\(moves)")
                 .monospaced()
         }
-        .font(.largeTitle)
         .frame(maxWidth: .infinity)
     }
 
@@ -136,18 +142,15 @@ struct ContentView: View {
             }
         }, label: {
             Image(systemName: showHint ? "eye.circle.fill" : "eye.slash.circle.fill")
-                .font(.largeTitle)
         })
         .frame(maxWidth: .infinity)
     }
     
     @ViewBuilder private func puzzleHintView(_ image: UIImage) -> some View {
         if showHint {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 150, height: 150)
-                .animation(.easeInOut, value: showHint)
+            PuzzleTileView(tile: PuzzleTile(image: image))
+                .frame(width: 200, height: 200)
+                .animation(.linear, value: showHint)
         }
     }
 
@@ -231,6 +234,21 @@ struct ContentView: View {
         guard let shuffledTiles = shuffledTiles else { return false }
         return tileIndex.0 >= 0 && tileIndex.0 < shuffledTiles.count &&
         tileIndex.1 >= 0 && tileIndex.1 < shuffledTiles[tileIndex.0].count
+    }
+}
+
+extension View {
+    public func foregroundLinearGradient(colors: [Color],
+                                         startPoint: UnitPoint,
+                                         endPoint: UnitPoint) -> some View {
+        self.overlay {
+            LinearGradient(
+                colors: colors,
+                startPoint: startPoint,
+                endPoint: endPoint
+            )
+            .mask(self)
+        }
     }
 }
 
