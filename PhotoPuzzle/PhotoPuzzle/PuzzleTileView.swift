@@ -21,7 +21,7 @@ struct PuzzleTileView: View {
         }
         .overlay(content: {
             RoundedRectangle(cornerRadius: 5)
-                .stroke(Color.colorOrange, lineWidth: 2)
+                .stroke(Color.colorYellow, lineWidth: 2)
         })
         .clipShape(RoundedRectangle(cornerRadius: 5))
     }

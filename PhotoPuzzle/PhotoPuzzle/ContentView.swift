@@ -37,7 +37,7 @@ struct ContentView: View {
                         photoPickerView()
                     }
                     .padding(.top, 20)
-                    .foregroundStyle(Color.colorYellow)
+                    .foregroundStyle(Color.colorOrange)
                     
                     puzzleHintView(puzzleImage)
                     
@@ -79,7 +79,6 @@ struct ContentView: View {
                 Text("Loading...")
                     .bold()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .foregroundStyle(Color.colorOrange)
             } else {
                 ContentUnavailableView(label: {
                     Text("No Image Selected")
@@ -97,6 +96,7 @@ struct ContentView: View {
     @ViewBuilder private func photoPickerView() -> some View {
         PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
             Image(systemName: "photo")
+                .foregroundStyle(loadedPuzzle ? Color.colorOrange : Color.colorYellow)
         }
         .frame(maxWidth: .infinity)
         .onChange(of: selectedPhotoItem, { _, _ in
@@ -133,6 +133,7 @@ struct ContentView: View {
                 .monospaced()
         }
         .frame(maxWidth: .infinity)
+        .foregroundStyle(Color.colorGray)
     }
 
     @ViewBuilder private func puzzleHintToggleView() -> some View {
