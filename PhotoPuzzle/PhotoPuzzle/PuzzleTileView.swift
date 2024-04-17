@@ -15,8 +15,9 @@ struct PuzzleTileView: View {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-            } else {
-                Color.white
+            }
+            else {
+                Color.colorYellow
             }
         }
         .overlay(content: {
