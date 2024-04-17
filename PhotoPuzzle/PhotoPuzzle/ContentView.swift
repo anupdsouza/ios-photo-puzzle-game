@@ -28,16 +28,18 @@ struct ContentView: View {
         NavigationView {
             VStack {
                 if loadedPuzzle, let shuffledTiles, let puzzleImage {
-                    
-                    HStack(alignment: .center) {
+
+                    HStack(spacing: 20) {
                         movesCountView()
+                        
+                        Spacer()
                         
                         puzzleHintToggleView()
                         
-                        photoPickerView()
+                        changePhotoView()
                     }
-                    .padding(.top, 20)
-                    .foregroundStyle(Color.colorOrange)
+                    .padding([.top, .horizontal], 20)
+                    .font(.system(size: 20))
                     
                     puzzleHintView(puzzleImage)
                     
@@ -55,6 +57,12 @@ struct ContentView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(content: {
+                if loadedPuzzle {
+                    ToolbarItem(placement: .topBarLeading) {
+                        closeButtonView()
+                    }
+                   
+                }
                 ToolbarItem(placement: .principal) {
                     titleView()
                 }
@@ -73,6 +81,17 @@ struct ContentView: View {
         .foregroundLinearGradient(colors: [Color.colorYellow, Color.colorOrange], startPoint: .top, endPoint: .bottom)
     }
     
+    @ViewBuilder private func closeButtonView() -> some View {
+        Button(action: {
+            reset()
+            selectedPhotoItem = nil
+        }, label: {
+            Image(systemName: "xmark.circle.fill")
+                .font(.body)
+                    .foregroundLinearGradient(colors: [Color.colorYellow, Color.colorOrange], startPoint: .top, endPoint: .bottom)
+        })
+    }
+    
     @ViewBuilder private func emptyPuzzleView() -> some View {
         VStack {
             if loadingImage {
@@ -87,6 +106,7 @@ struct ContentView: View {
                     Text("Click the button below to pick one")
                 }, actions: {
                     photoPickerView()
+                        .foregroundStyle(Color.colorYellow)
                 })
             }
         }
@@ -96,9 +116,7 @@ struct ContentView: View {
     @ViewBuilder private func photoPickerView() -> some View {
         PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
             Image(systemName: "photo")
-                .foregroundStyle(loadedPuzzle ? Color.colorOrange : Color.colorYellow)
         }
-        .frame(maxWidth: .infinity)
         .onChange(of: selectedPhotoItem, { _, _ in
             Task {
                 if let selectedPhotoItem {
@@ -127,24 +145,41 @@ struct ContentView: View {
     }
 
     @ViewBuilder private func movesCountView() -> some View {
-        HStack {
-            Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
-            Text("\(moves)")
-                .monospaced()
+        VStack(alignment: .leading) {
+            HStack {
+                Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+                Text("\(moves)")
+                    .monospaced()
+            }
+            
+            Text("moves")
+                .font(.callout)
         }
-        .frame(maxWidth: .infinity)
-        .foregroundStyle(Color.colorGray)
+        .foregroundStyle(Color.colorBlue)
     }
 
     @ViewBuilder private func puzzleHintToggleView() -> some View {
-        Button(action: {
-            withAnimation {
-                showHint.toggle()
-            }
-        }, label: {
-            Image(systemName: showHint ? "eye.circle.fill" : "eye.slash.circle.fill")
-        })
-        .frame(maxWidth: .infinity)
+        VStack {
+            Button(action: {
+                withAnimation {
+                    showHint.toggle()
+                }
+            }, label: {
+                Image(systemName: showHint ? "eye.circle.fill" : "eye.slash.circle.fill")
+            })
+            Text("hint")
+                .font(.callout)
+        }
+        .foregroundStyle(Color.colorGreen)
+    }
+
+    @ViewBuilder private func changePhotoView() -> some View {
+        VStack {
+            photoPickerView()
+            Text("change")
+                .font(.callout)
+        }
+        .foregroundStyle(Color.colorYellow)
     }
     
     @ViewBuilder private func puzzleHintView(_ image: UIImage) -> some View {
