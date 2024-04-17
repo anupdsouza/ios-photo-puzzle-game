@@ -8,10 +8,6 @@
 import SwiftUI
 import PhotosUI
 
-enum Direction {
-    case up, down, left, right
-}
-
 struct ContentView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var puzzleImage: UIImage?
@@ -217,6 +213,12 @@ struct ContentView: View {
         puzzleImage = nil
         orderedTiles = nil
         shuffledTiles = nil
+    }
+}
+
+extension ContentView {
+    enum Direction {
+        case up, down, left, right
     }
     
     private func tappedTile(row: Int, column: Int) {
